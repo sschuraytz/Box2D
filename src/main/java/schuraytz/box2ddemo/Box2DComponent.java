@@ -22,19 +22,21 @@ public class Box2DComponent extends JComponent {
     private long time;
     private final int BOX_WIDTH = 200;
     private final int BOX_MARGIN = 10;
+    private Body boxBody;
 
     public Box2DComponent() {
         World.setVelocityThreshold(0);
         world = new World(new Vector2(0, 9.8f), false);
         shape = new PolygonShape();
 
+        createBodyBox();
         createAllWalls();
         ball1 = createBall(10);
         ball2 = createBall(20);
         ball3 = createBall(30);
         time = System.currentTimeMillis();
     }
-    
+
     private void createAllWalls() {
         createWall(BOX_WIDTH, 0, 0, 0);     //top wall
         createWall(0, BOX_WIDTH, 0, 0);     //left wall
@@ -42,11 +44,13 @@ public class Box2DComponent extends JComponent {
         createWall(BOX_WIDTH, 0, 0, BOX_WIDTH);   //bottom wall
     }
 
-    private void createWall(int hx, int hy, int x, int y) {
+    private void createBodyBox() {
         BodyDef bodyDef = new BodyDef();
         bodyDef.type = BodyType.StaticBody;
-        Body boxBody = world.createBody(bodyDef);
+        boxBody = world.createBody(bodyDef);
+    }
 
+    private void createWall(int hx, int hy, int x, int y) {
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = shape;
         fixtureDef.restitution = 1;
@@ -64,7 +68,7 @@ public class Box2DComponent extends JComponent {
         CircleShape circle = new CircleShape();
         circle.setRadius(radius);
         fixtureDef.shape = circle;
-        fixtureDef.restitution = 1;
+        fixtureDef.restitution = radius;
         ball.createFixture(fixtureDef);
         ball.applyForceToCenter(radius*BOX_WIDTH, radius*BOX_WIDTH, true);
         return ball;
