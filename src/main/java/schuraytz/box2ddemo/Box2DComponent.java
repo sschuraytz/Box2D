@@ -14,6 +14,9 @@ import java.awt.*;
 
 public class Box2DComponent extends JComponent {
 
+    private static final float BOX_TO_SCREEN = 5f;   //every 1 unit in Box2d is 5 in our world
+    private static final float SCREEN_TO_BOX = 1f / BOX_TO_SCREEN;
+
     private final World world;
     private PolygonShape shape;
     private Body ball1;
@@ -26,7 +29,7 @@ public class Box2DComponent extends JComponent {
 
     public Box2DComponent() {
         World.setVelocityThreshold(0);
-        world = new World(new Vector2(0, 9.8f), false);
+        world = new World(new Vector2(0, 9.8f * SCREEN_TO_BOX), false);
         shape = new PolygonShape();
 
         createBodyBox();
@@ -38,10 +41,11 @@ public class Box2DComponent extends JComponent {
     }
 
     private void createAllWalls() {
-        createWall(BOX_WIDTH, 0, 0, 0);     //top wall
-        createWall(0, BOX_WIDTH, 0, 0);     //left wall
-        createWall(BOX_MARGIN, BOX_WIDTH, BOX_WIDTH, 0);  //right wall
-        createWall(BOX_WIDTH, 0, 0, BOX_WIDTH);   //bottom wall
+        int tempNum = 1;
+        createWall(BOX_WIDTH, tempNum, tempNum, tempNum);     //top wall
+        createWall(tempNum, BOX_WIDTH, tempNum, tempNum);     //left wall
+        createWall(BOX_MARGIN, BOX_WIDTH, BOX_WIDTH, tempNum);  //right wall
+        createWall(BOX_WIDTH, tempNum, tempNum, BOX_WIDTH);   //bottom wall
     }
 
     private void createBodyBox() {
@@ -54,23 +58,23 @@ public class Box2DComponent extends JComponent {
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = shape;
         fixtureDef.restitution = 1;
-        shape.setAsBox(hx, hy, new Vector2(x, y), 0);
+        shape.setAsBox(hx * SCREEN_TO_BOX, hy * SCREEN_TO_BOX, new Vector2(x * SCREEN_TO_BOX, y * SCREEN_TO_BOX), 0);
         boxBody.createFixture(fixtureDef);
     }
 
     private Body createBall(int radius) {
         BodyDef bodyDef = new BodyDef();
         bodyDef.type = BodyType.DynamicBody;
-        bodyDef.position.set(radius, BOX_MARGIN);
+        bodyDef.position.set(radius * SCREEN_TO_BOX, BOX_MARGIN * SCREEN_TO_BOX);
         Body ball = world.createBody(bodyDef);
 
         FixtureDef fixtureDef = new FixtureDef();
         CircleShape circle = new CircleShape();
-        circle.setRadius(radius);
+        circle.setRadius(radius * SCREEN_TO_BOX);
         fixtureDef.shape = circle;
-        fixtureDef.restitution = radius;
+        fixtureDef.restitution = 1;
         ball.createFixture(fixtureDef);
-        ball.applyForceToCenter(radius*BOX_WIDTH, radius*BOX_WIDTH, true);
+        ball.applyForceToCenter(radius*BOX_WIDTH * SCREEN_TO_BOX, radius*BOX_WIDTH * SCREEN_TO_BOX, true);
         return ball;
     }
 
@@ -82,19 +86,20 @@ public class Box2DComponent extends JComponent {
             world.step((currentTime - time) / 1000f, 6, 2); //amount of millis since last time called paintComponent
             time = currentTime;
 
-            graphics.drawLine(BOX_MARGIN, BOX_WIDTH, BOX_WIDTH - BOX_MARGIN, BOX_WIDTH);    //bottom wall
-            graphics.drawLine(BOX_WIDTH - BOX_MARGIN, BOX_MARGIN, BOX_WIDTH - BOX_MARGIN, BOX_WIDTH);         //right wall
-            graphics.drawLine(BOX_MARGIN, BOX_MARGIN, BOX_MARGIN, BOX_WIDTH);                               //left wall
-            graphics.drawLine(BOX_MARGIN, BOX_MARGIN, BOX_WIDTH - BOX_MARGIN, BOX_MARGIN);                               //top wall
-            drawBall(graphics, ball1, 10);
-            drawBall(graphics, ball2, 20);
-            drawBall(graphics, ball3, 30);
+            graphics.drawLine(1, BOX_WIDTH, (BOX_WIDTH - BOX_MARGIN), BOX_WIDTH);                  //bottom wall
+            graphics.drawLine((BOX_WIDTH - BOX_MARGIN), BOX_MARGIN, (BOX_WIDTH - BOX_MARGIN), BOX_WIDTH);   //right wall
+            graphics.drawLine(1, BOX_MARGIN, 1, BOX_WIDTH);                               //left wall
+            graphics.drawLine(1, BOX_MARGIN, (BOX_WIDTH - BOX_MARGIN), BOX_MARGIN);                //top wall
+            drawBall(graphics, ball1);
+            drawBall(graphics, ball2);
+            drawBall(graphics, ball3);
 
             repaint();
         }
 
-        public void drawBall(Graphics graphics, Body ball, int radius) {
-            graphics.fillOval((int) ball.getPosition().x, (int) ball.getPosition().y,
-                    radius, radius);
+        public void drawBall(Graphics graphics, Body ball) {
+            int radius = (int) (ball.getFixtureList().get(0).getShape().getRadius() * BOX_TO_SCREEN);
+            graphics.fillOval((int) (ball.getPosition().x * BOX_TO_SCREEN - radius), (int) (ball.getPosition().y * BOX_TO_SCREEN - radius),
+                    radius * 2, radius * 2);
         }
 }
